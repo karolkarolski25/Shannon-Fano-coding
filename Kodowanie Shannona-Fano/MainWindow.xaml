@@ -21,7 +21,7 @@
         <Button x:Name="LoadFileButton" Content="Wczytaj plik" FontSize="16" HorizontalAlignment="Left" Margin="414,13,0,0" VerticalAlignment="Top" Width="113" Click="LoadFileButton_Click"/>
         <TextBox x:Name="EncodedTextBox" IsReadOnly="True" FontSize="14" HorizontalAlignment="Left" VerticalScrollBarVisibility="Auto" Margin="365,428,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="404" Height="338"/>
         <TextBox x:Name="PlainTextBox" IsReadOnly="True" FontSize="16" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Margin="0,54,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="720" Height="232"/>
-        <Button x:Name="DecodeButton" IsEnabled="False" Content="Dekoduj" FontSize="16" HorizontalAlignment="Left" Margin="662,13,0,0" VerticalAlignment="Top" Width="87"/>
+        <Button x:Name="DecodeButton" IsEnabled="False" Content="Dekoduj" FontSize="16" HorizontalAlignment="Left" Margin="662,13,0,0" VerticalAlignment="Top" Width="87" Click="DecodeButton_Click"/>
 
         <Label Content="Zawartość pliku" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="40,13,0,0" VerticalAlignment="Top"/>
         <Label Content="|V| Wartość wyjściowa |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="423,392,0,0" VerticalAlignment="Top"/>

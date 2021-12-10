@@ -17,6 +17,8 @@ namespace Kodowanie_Shannona_Fano
         private string OutputFileTreeCode = string.Empty;
         private string OutputFileData = string.Empty;
 
+        private byte[] BinaryFileBuffer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -65,12 +67,80 @@ namespace Kodowanie_Shannona_Fano
             Encode(codeWordList.ToDictionary(k => k.Char, v => v.Code), input, treeCode);
         }
 
-        private void Decode()
+        private string RestoreReadableTreeCode(string treeCode)
+        {
+            var readableTreeCode = string.Empty;
+
+            for (int i = 0; i < treeCode.Length - 10; i++)
+            {
+                if (treeCode[i] == '0')
+                {
+                    readableTreeCode += treeCode[i];
+                }
+                else
+                {
+                    readableTreeCode += treeCode[i];
+                    string charToDecode = string.Empty;
+
+                    for (int j = i + 1; j < i + 10; j++)
+                    {
+                        charToDecode += treeCode[j];
+                    }
+
+                    i += 9;
+
+                    readableTreeCode += $"[{(char)Convert.ToInt32(charToDecode, 2)}]";
+                }
+            }
+
+            return readableTreeCode;
+        }
+
+        private void DecodeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (BinaryFileBuffer != null)
+            {
+                List<byte> treeBuffer = new List<byte>();
+                bool ff = false;
+
+                foreach (var b in BinaryFileBuffer)
+                {
+                    if (b == 255)
+                    {
+                        if (ff)
+                        {
+                            break;
+                        }
+
+                        ff = true;
+                    }
+                    else
+                    {
+                        treeBuffer.Add(b);
+                    }
+                }
+
+                byte[] data = new byte[BinaryFileBuffer.Length - treeBuffer.Count - 2];
+                Array.Copy(BinaryFileBuffer, treeBuffer.Count + 2, data, 0, data.Length);
+
+                string treeCode = treeBuffer.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e);
+
+                TreeCodeTextBox.Text = RestoreReadableTreeCode(treeCode);
+
+                Decode(data, treeCode);
+            }
+        }
+
+        private void Decode(byte[] data, string treeCode)
         {
             if (OutputFileTitle.Contains("Encoded"))
             {
                 OutputFileTitle = OutputFileTitle.Replace("Encoded", "Decoded");
             }
+
+            Node root = new Node('\0');
+
+            TreeService.BuildTreeForDecoding(root, root, ref treeCode);
 
             SaveToFileButton.IsEnabled = true;
         }
@@ -96,7 +166,7 @@ namespace Kodowanie_Shannona_Fano
             EncodedLengthLabel.Content = $"Długość tekstu zakodowanego: {encodedTextlength} bitów";
 
             CompressionRatioLabel.Content = $"Stopień kompresji: 100% * {encodedTextlength}/{plainText.Length * 8} = " +
-                $"{Math.Round(encodedTextlength / (plainText.Length * 8.0) * 100), 2} %";
+                $"{Math.Round(encodedTextlength / (plainText.Length * 8.0) * 100),2} %";
 
             SaveToFileButton.IsEnabled = true;
         }
@@ -109,25 +179,60 @@ namespace Kodowanie_Shannona_Fano
                 {
                     treeCode = treeCode
                         .Remove(i, 1) //Remove '['
-                        .Remove(i + 1, 1) //Remove ']'
-                        .Remove(i, 1) //Remove char to replace
-                        .Insert(i, Convert.ToString(treeCode[i], 2).PadLeft(9, '0')); //Replace char with binary
+                        .Remove(i + 1, 1); //Remove ']'
+
+                    var charToReplace = treeCode[i];
+
+                    treeCode = treeCode
+                        .Remove(i, 1)
+                        .Insert(i, Convert.ToString(charToReplace, 2)
+                        .PadLeft(9, '0'));
                 }
             }
+
             return treeCode;
+        }
+
+        private (string stringMsg, byte[] byteArray) ReadBinaryFile(string path)
+        {
+            byte[] buffer = File.ReadAllBytes(path);
+            StringBuilder stringBuilder = new StringBuilder();
+
+            foreach (var b in buffer)
+            {
+                stringBuilder.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
+            }
+
+            return (stringBuilder.ToString(), buffer);
         }
 
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog inputFile = new OpenFileDialog();
             inputFile.Multiselect = false;
-            inputFile.Filter = "Text files(*.txt)| *.txt";
+            //inputFile.Filter = "Text files(*.txt)| *.txt|Binary files(*.bin)| *.bin";
 
             if (inputFile.ShowDialog() == true)
             {
                 OutputFileTitle = Path.GetFileName(inputFile.FileName);
 
-                PlainTextBox.Text = File.ReadAllText(inputFile.FileName);
+                if (Path.GetExtension(inputFile.FileName) == ".bin")
+                {
+                    var binaryFileContent = ReadBinaryFile(inputFile.FileName);
+
+                    PlainTextBox.Text = binaryFileContent.stringMsg;
+                    BinaryFileBuffer = binaryFileContent.byteArray;
+
+                    CodeButton.IsEnabled = false;
+                    DecodeButton.IsEnabled = true;
+                }
+                else
+                {
+                    PlainTextBox.Text = File.ReadAllText(inputFile.FileName);
+
+                    CodeButton.IsEnabled = true;
+                    DecodeButton.IsEnabled = false;
+                }
             }
         }
 
@@ -144,7 +249,7 @@ namespace Kodowanie_Shannona_Fano
             {
                 if (i + 8 > OutputFileTreeCode.Length)
                 {
-                    treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i), 2);
+                    treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i).PadRight(8, '0'), 2);
                 }
                 else
                 {
@@ -164,7 +269,7 @@ namespace Kodowanie_Shannona_Fano
             {
                 if (i + 8 > OutputFileData.Length)
                 {
-                    dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i), 2);
+                    dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i).PadRight(8, '0'), 2);
                 }
                 else
                 {
