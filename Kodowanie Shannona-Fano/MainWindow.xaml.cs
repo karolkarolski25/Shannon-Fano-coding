@@ -103,7 +103,7 @@ namespace Kodowanie_Shannona_Fano
 
                 TreeCodeTextBox.Text = TreeCodeService.RestoreReadableTreeCode(treeCode);
 
-                Decode(data.Skip(1).Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e), treeCode);
+                Decode(data.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e), treeCode);
             }
         }
 
