@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace Kodowanie_Shannona_Fano
 {
@@ -11,9 +13,40 @@ namespace Kodowanie_Shannona_Fano
             return list.Aggregate(0, (x, y) => x + y.Count);
         }
 
+        public static void Decode(Node node, Node root, ref string encoded, ref StringBuilder decoded)
+        {
+            if (!encoded.Any())
+            {
+                decoded.Append(node.Value);
+                return;
+            }
+            else
+            {
+                if (node.Left == null && node.Right == null)
+                {
+                    decoded.Append(node.Value);
+                    Decode(root, root, ref encoded, ref decoded);
+                }
+                else
+                {
+                    if (encoded[0] == '0')
+                    {
+                        encoded = encoded.Substring(1);
+                        Decode(node.Left, root, ref encoded, ref decoded);
+                    }
+
+                    else if (encoded[0] == '1')
+                    {
+                        encoded = encoded.Substring(1);
+                        Decode(node.Right, root, ref encoded, ref decoded);
+                    }
+                }
+            }
+        }
+
         public static void BuildTreeForDecoding(Node root, Node parent, ref string treeCode)
         {
-            if (treeCode.Length == 0 || treeCode.Contains('1') == false)
+            if (!treeCode.Any() || !treeCode.Any(c => c == '1'))
             {
                 return;
             }

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows;
+using System.Windows.Input;
 
 namespace Kodowanie_Shannona_Fano
 {
@@ -19,6 +20,8 @@ namespace Kodowanie_Shannona_Fano
 
         private byte[] BinaryFileBuffer;
 
+        private bool IsContentEncoded;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -26,7 +29,7 @@ namespace Kodowanie_Shannona_Fano
 
         private void CodeButton_Click(object sender, RoutedEventArgs e)
         {
-            var input = PlainTextBox.Text.Replace("\n", "").Replace("\r", "").Replace("\0", "");
+            var input = InputTextBox.Text.Replace("\r", "").Replace("\0", "");
 
             PlainLenghtLabel.Content = $"Długość tekstu jawnego: {input.Length * 8} bitów";
 
@@ -67,35 +70,6 @@ namespace Kodowanie_Shannona_Fano
             Encode(codeWordList.ToDictionary(k => k.Char, v => v.Code), input, treeCode);
         }
 
-        private string RestoreReadableTreeCode(string treeCode)
-        {
-            var readableTreeCode = string.Empty;
-
-            for (int i = 0; i < treeCode.Length - 10; i++)
-            {
-                if (treeCode[i] == '0')
-                {
-                    readableTreeCode += treeCode[i];
-                }
-                else
-                {
-                    readableTreeCode += treeCode[i];
-                    string charToDecode = string.Empty;
-
-                    for (int j = i + 1; j < i + 10; j++)
-                    {
-                        charToDecode += treeCode[j];
-                    }
-
-                    i += 9;
-
-                    readableTreeCode += $"[{(char)Convert.ToInt32(charToDecode, 2)}]";
-                }
-            }
-
-            return readableTreeCode;
-        }
-
         private void DecodeButton_Click(object sender, RoutedEventArgs e)
         {
             if (BinaryFileBuffer != null)
@@ -125,24 +99,81 @@ namespace Kodowanie_Shannona_Fano
 
                 string treeCode = treeBuffer.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e);
 
-                TreeCodeTextBox.Text = RestoreReadableTreeCode(treeCode);
+                TreeCodeTextBox.Text = TreeCodeService.RestoreReadableTreeCode(treeCode);
 
-                Decode(data, treeCode);
+                Decode(data.Skip(1).Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e), treeCode);
             }
         }
 
-        private void Decode(byte[] data, string treeCode)
+        private void Decode(string encoded, string treeCode)
         {
             if (OutputFileTitle.Contains("Encoded"))
             {
                 OutputFileTitle = OutputFileTitle.Replace("Encoded", "Decoded");
             }
 
+            var treeCodeLengthWithAdditionalZeros = treeCode.Length;
+
             Node root = new Node('\0');
 
             TreeService.BuildTreeForDecoding(root, root, ref treeCode);
 
+            var decoded = new StringBuilder();
+
+            var zerosToRemove = Convert.ToInt32(encoded.Substring(encoded.Length - 3), 2);
+
+            if (zerosToRemove >= 0)
+            {
+                encoded = encoded.Remove(encoded.Length - 3);
+
+                if (zerosToRemove > 0)
+                {
+                    encoded = encoded.Remove(encoded.Length - zerosToRemove);
+                }
+            }
+
+            var encodedLength = encoded.Length + treeCodeLengthWithAdditionalZeros - treeCode.Length;
+
+            TreeService.Decode(root, root, ref encoded, ref decoded);
+
+            var dividedChars = decoded.ToString()
+               .GroupBy(c => c)
+               .Select(c => new CharStatistics()
+               {
+                   Char = c.Key,
+                   Count = c.Count()
+               })
+               .OrderByDescending(c => c.Count)
+               .ToList();
+
+            var codeWordList = TreeService.GetCodeWordFromTree(root);
+
+            List<Summary> summary = new List<Summary>();
+
+            foreach (var codeWord in codeWordList)
+            {
+                summary.Add(new Summary()
+                {
+                    Char = codeWord.Char,
+                    Code = codeWord.Code,
+                    Count = dividedChars.First(c => c.Char == codeWord.Char).Count
+                });
+            }
+
+            SummaryListView.ItemsSource = summary;
+
+            OutputTextBox.Text = decoded.ToString();
+
+            EncodedLengthLabel.Content = $"Długość tekstu zakodowanego: {encodedLength} bitów";
+
+            PlainLenghtLabel.Content = $"Długość tekstu jawnego: {decoded.ToString().Length * 8} bitów";
+
+            CompressionRatioLabel.Content = $"Stopień kompresji: 100% * {encodedLength}/{decoded.ToString().Length * 8} = " +
+                $"{Math.Round(encodedLength / (decoded.ToString().Length * 8.0) * 100),2} %";
+
             SaveToFileButton.IsEnabled = true;
+
+            IsContentEncoded = false;
         }
 
         private void Encode(Dictionary<char, string> codeWordList, string plainText, string treeCode)
@@ -156,10 +187,10 @@ namespace Kodowanie_Shannona_Fano
                 builder.Append(codeWordList[letter]);
             }
 
-            OutputFileTreeCode = FixTreeCode(treeCode);
+            OutputFileTreeCode = TreeCodeService.FixTreeCode(treeCode);
             OutputFileData = builder.ToString();
 
-            EncodedTextBox.Text = OutputFileTreeCode + OutputFileData;
+            OutputTextBox.Text = OutputFileTreeCode + OutputFileData;
 
             int encodedTextlength = (OutputFileTreeCode + OutputFileData).Length;
 
@@ -169,28 +200,8 @@ namespace Kodowanie_Shannona_Fano
                 $"{Math.Round(encodedTextlength / (plainText.Length * 8.0) * 100),2} %";
 
             SaveToFileButton.IsEnabled = true;
-        }
 
-        private string FixTreeCode(string treeCode)
-        {
-            for (int i = 0; i < treeCode.Length; i++)
-            {
-                if (treeCode[i] == '[')
-                {
-                    treeCode = treeCode
-                        .Remove(i, 1) //Remove '['
-                        .Remove(i + 1, 1); //Remove ']'
-
-                    var charToReplace = treeCode[i];
-
-                    treeCode = treeCode
-                        .Remove(i, 1)
-                        .Insert(i, Convert.ToString(charToReplace, 2)
-                        .PadLeft(9, '0'));
-                }
-            }
-
-            return treeCode;
+            IsContentEncoded = true;
         }
 
         private (string stringMsg, byte[] byteArray) ReadBinaryFile(string path)
@@ -214,13 +225,13 @@ namespace Kodowanie_Shannona_Fano
 
             if (inputFile.ShowDialog() == true)
             {
-                OutputFileTitle = Path.GetFileName(inputFile.FileName);
+                OutputFileTitle = Path.GetFileNameWithoutExtension(inputFile.FileName);
 
                 if (Path.GetExtension(inputFile.FileName) == ".bin")
                 {
                     var binaryFileContent = ReadBinaryFile(inputFile.FileName);
 
-                    PlainTextBox.Text = binaryFileContent.stringMsg;
+                    InputTextBox.Text = binaryFileContent.stringMsg;
                     BinaryFileBuffer = binaryFileContent.byteArray;
 
                     CodeButton.IsEnabled = false;
@@ -228,7 +239,7 @@ namespace Kodowanie_Shannona_Fano
                 }
                 else
                 {
-                    PlainTextBox.Text = File.ReadAllText(inputFile.FileName);
+                    InputTextBox.Text = File.ReadAllText(inputFile.FileName);
 
                     CodeButton.IsEnabled = true;
                     DecodeButton.IsEnabled = false;
@@ -239,53 +250,117 @@ namespace Kodowanie_Shannona_Fano
         private void SaveToFileButton_Click(object sender, RoutedEventArgs e)
         {
             FileDialog outputFile = new SaveFileDialog();
-            outputFile.Filter = "binary files (*.bin)|*.bin";
+            outputFile.Filter = IsContentEncoded ? "Binary files (*.bin)|*.bin" : "Text files(*.txt)| *.txt";
             outputFile.Title = "Wybierz plik";
             outputFile.FileName = OutputFileTitle;
 
-            byte[] treeCodeBuffer = new byte[(OutputFileTreeCode.Length / 8) + 1];
-
-            for (int i = 0, j = 0; i < OutputFileTreeCode.Length; i += 8, j++)
+            if (IsContentEncoded)
             {
-                if (i + 8 > OutputFileTreeCode.Length)
+                byte[] treeCodeBuffer = new byte[(OutputFileTreeCode.Length / 8) + 1];
+
+                for (int i = 0, j = 0; i < OutputFileTreeCode.Length; i += 8, j++)
                 {
-                    treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i).PadRight(8, '0'), 2);
+                    if (i + 8 > OutputFileTreeCode.Length)
+                    {
+                        treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i).PadRight(8, '0'), 2);
+                    }
+                    else
+                    {
+                        treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i, 8), 2);
+                    }
                 }
-                else
+
+                byte[] treeCodeBufferAndSpacer = new byte[treeCodeBuffer.Length + 2];
+
+                Array.Copy(treeCodeBuffer, treeCodeBufferAndSpacer, treeCodeBuffer.Length);
+                treeCodeBufferAndSpacer[treeCodeBuffer.Length] = 255;
+                treeCodeBufferAndSpacer[treeCodeBuffer.Length + 1] = 255;
+
+                byte[] dataBuffer = new byte[(OutputFileData.Length / 8) + 1];
+
+                for (int i = 0, j = 0; i < OutputFileData.Length; i += 8, j++)
                 {
-                    treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i, 8), 2);
+                    if (i + 8 > OutputFileData.Length)
+                    {
+                        var temp = OutputFileData.Substring(i);
+
+                        var lengthToAdd = 5 - temp.Length;
+
+                        if (lengthToAdd >= 0)
+                        {
+                            temp = temp.PadRight(5, '0');
+                            temp += Convert.ToString(lengthToAdd, 2).PadLeft(3, '0');
+                        }
+
+                        dataBuffer[j] = (byte)Convert.ToInt32(temp, 2);
+                    }
+                    else
+                    {
+                        dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i, 8), 2);
+                    }
+                }
+
+                byte[] treeCodeBufferAndSpacerAndDataBuffer = new byte[treeCodeBufferAndSpacer.Length + dataBuffer.Length + 1];
+                Array.Copy(treeCodeBufferAndSpacer, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length);
+                Array.Copy(dataBuffer, 0, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length + 1, dataBuffer.Length);
+
+                if (outputFile.ShowDialog() == true)
+                {
+                    File.WriteAllBytes(outputFile.FileName, treeCodeBufferAndSpacerAndDataBuffer);
                 }
             }
-
-            byte[] treeCodeBufferAndSpacer = new byte[treeCodeBuffer.Length + 2];
-
-            Array.Copy(treeCodeBuffer, treeCodeBufferAndSpacer, treeCodeBuffer.Length);
-            treeCodeBufferAndSpacer[treeCodeBuffer.Length] = 255;
-            treeCodeBufferAndSpacer[treeCodeBuffer.Length + 1] = 255;
-
-            byte[] dataBuffer = new byte[(OutputFileData.Length / 8) + 1];
-
-            for (int i = 0, j = 0; i < OutputFileData.Length; i += 8, j++)
+            else
             {
-                if (i + 8 > OutputFileData.Length)
+                if (outputFile.ShowDialog() == true)
                 {
-                    dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i).PadRight(8, '0'), 2);
-                }
-                else
-                {
-                    dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i, 8), 2);
+                    File.WriteAllText(outputFile.FileName, OutputTextBox.Text);
                 }
             }
+        }
 
-            byte[] treeCodeBufferAndSpacerAndDataBuffer = new byte[treeCodeBufferAndSpacer.Length + dataBuffer.Length + 1];
-            Array.Copy(treeCodeBufferAndSpacer, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length);
-            Array.Copy(dataBuffer, 0, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length + 1, dataBuffer.Length);
-
-
-            if (outputFile.ShowDialog() == true)
+        private void Window_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            try
             {
-                File.WriteAllBytes(outputFile.FileName, treeCodeBufferAndSpacerAndDataBuffer);
+                DragMove();
             }
+            catch { }
+        }
+
+        private void ExitButton_Click(object sender, RoutedEventArgs e)
+        {
+            switch (MessageBox.Show("Are you sure?", "Closing application",
+                MessageBoxButton.YesNoCancel, MessageBoxImage.Question))
+            {
+                case MessageBoxResult.Yes:
+                    Close();
+                    break;
+                case MessageBoxResult.No:
+                case MessageBoxResult.Cancel:
+                default:
+                    break;
+            }
+        }
+
+        private void MinimiseButton_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        private void ResetButton_Click(object sender, RoutedEventArgs e)
+        {
+            OutputTextBox.Clear();
+            TreeCodeTextBox.Clear();
+            InputTextBox.Clear();
+
+            SummaryListView.ItemsSource = null;
+
+            EncodedLengthLabel.Content = $"Długość tekstu zakodowanego: ";
+            PlainLenghtLabel.Content = $"Długość tekstu jawnego: ";
+            CompressionRatioLabel.Content = $"Stopień kompresji: ";
+
+            CodeButton.IsEnabled = false;
+            DecodeButton.IsEnabled = false;
         }
     }
 }
