@@ -99,11 +99,11 @@ namespace Kodowanie_Shannona_Fano
                 byte[] data = new byte[BinaryFileBuffer.Length - treeBuffer.Count - 2];
                 Array.Copy(BinaryFileBuffer, treeBuffer.Count + 2, data, 0, data.Length);
 
-                string treeCode = treeBuffer.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e);
+                var treeCode = string.Join("", treeBuffer.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')));
 
                 TreeCodeTextBox.Text = TreeCodeService.RestoreReadableTreeCode(treeCode);
 
-                Decode(data.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')).Aggregate((a, e) => a + e), treeCode);
+                Decode(string.Join("", data.Select(b => Convert.ToString(b, 2).PadLeft(8, '0'))), treeCode);
             }
         }
 
@@ -136,7 +136,14 @@ namespace Kodowanie_Shannona_Fano
 
             var encodedLength = encoded.Length + treeCodeLengthWithAdditionalZeros - treeCode.Length;
 
-            TreeService.Decode(root, root, ref encoded, ref decoded);
+            char decodedChar = '\0';
+            int iterator = 0;
+
+            while (iterator < encoded.Length)
+            {
+                TreeService.Decode(root, encoded, ref decodedChar, ref iterator);
+                decoded.Append(decodedChar);
+            }
 
             var dividedChars = decoded.ToString()
                .GroupBy(c => c)

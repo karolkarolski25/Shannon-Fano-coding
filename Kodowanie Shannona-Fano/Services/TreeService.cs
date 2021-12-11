@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Kodowanie_Shannona_Fano.Services
 {
@@ -13,35 +12,15 @@ namespace Kodowanie_Shannona_Fano.Services
             return list.Aggregate(0, (x, y) => x + y.Count);
         }
 
-        public static void Decode(Node node, Node root, ref string encoded, ref StringBuilder decoded)
+        public static void Decode(Node node, string encoded, ref char decodedChar, ref int iter)
         {
-            if (!encoded.Any())
+            if (node.Left == null && node.Right == null)
             {
-                decoded.Append(node.Value);
+                decodedChar = node.Value;
                 return;
             }
-            else
-            {
-                if (node.Left == null && node.Right == null)
-                {
-                    decoded.Append(node.Value);
-                    Decode(root, root, ref encoded, ref decoded);
-                }
-                else
-                {
-                    if (encoded[0] == '0')
-                    {
-                        encoded = encoded.Substring(1);
-                        Decode(node.Left, root, ref encoded, ref decoded);
-                    }
 
-                    else if (encoded[0] == '1')
-                    {
-                        encoded = encoded.Substring(1);
-                        Decode(node.Right, root, ref encoded, ref decoded);
-                    }
-                }
-            }
+            Decode(encoded[iter++] == '0' ? node.Left : node.Right, encoded, ref decodedChar, ref iter);
         }
 
         public static void BuildTreeForDecoding(Node root, Node parent, ref string treeCode)
@@ -65,13 +44,7 @@ namespace Kodowanie_Shannona_Fano.Services
                         if (root.Right == null)
                         {
                             root.Right = new Node('\0');
-                            //treeCode = treeCode.Substring(1);
                             BuildTreeForDecoding(root.Right, root, ref treeCode);
-                        }
-
-                        if (root.Left != null && root.Right != null)
-                        {
-                            //BuildTreeForDecoding(parent, parent, ref treeCode);
                         }
                     }
                 }
