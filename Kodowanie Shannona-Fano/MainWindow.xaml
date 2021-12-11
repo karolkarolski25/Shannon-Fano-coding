@@ -33,9 +33,9 @@
         <Label Content="|V| Zawartość pliku |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="40,13,0,0" VerticalAlignment="Top"/>
         <Label Content="|V| Wartość wyjściowa |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="832,175,0,0" VerticalAlignment="Top"/>
         <Label Content="Lista słów kodowych" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="462,199,0,0" VerticalAlignment="Top" Height="42"/>
-        <Label x:Name="PlainLenghtLabel" Content="Długość tekstu jawnego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,685,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="EncodedLengthLabel" Content="Długość tekstu zakodowanego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,721,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="CompressionRatioLabel" Content="Stopień kompresji: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,757,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="PlainLenghtLabel" Content="Długość tekstu jawnego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,665,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="EncodedLengthLabel" Content="Długość tekstu zakodowanego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,701,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="CompressionRatioLabel" Content="Stopień kompresji: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,737,0,0" VerticalAlignment="Top"/>
         <ListView x:Name="SummaryListView" Margin="458,241,498,161">
             <ListView.View>
                 <GridView>
@@ -50,6 +50,7 @@
         <Button x:Name="SaveToFileButton" IsEnabled="False" FontSize="16" Content="Zapisz do pliku" HorizontalAlignment="Left" Margin="1038,178,0,0" VerticalAlignment="Top" Width="131" Click="SaveToFileButton_Click"/>
         <Label Content="Kodowanie Shannona-Fano z użyciem drzew" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Left" Margin="290,13,0,0" VerticalAlignment="Top"/>
         <Button x:Name="ResetButton" Content="Reset" FontSize="16" HorizontalAlignment="Left" Margin="671,184,0,0" VerticalAlignment="Top" Click="ResetButton_Click" Width="92"/>
+        <Label x:Name="TimeLabel" FontSize="16" Foreground="White" Content="Czas: " HorizontalAlignment="Left" Margin="24,773,0,0" VerticalAlignment="Top"/>
 
 
     </Grid>

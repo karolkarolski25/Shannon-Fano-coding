@@ -3,6 +3,7 @@ using Kodowanie_Shannona_Fano.Services;
 using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -21,8 +22,9 @@ namespace Kodowanie_Shannona_Fano
         private string OutputFileData = string.Empty;
 
         private byte[] BinaryFileBuffer;
-
         private bool IsContentEncoded;
+
+        private Stopwatch stopwatch = new Stopwatch();
 
         public MainWindow()
         {
@@ -31,9 +33,11 @@ namespace Kodowanie_Shannona_Fano
 
         private void CodeButton_Click(object sender, RoutedEventArgs e)
         {
-            var input = InputTextBox.Text.Replace("\r", "").Replace("\0", "");
+            var input = InputTextBox.Text.Replace("\r", "").Replace("\0", "").Replace("•", "TUTAAAAAj");
 
             PlainLenghtLabel.Content = $"Długość tekstu jawnego: {input.Length * 8} bitów";
+
+            stopwatch.Start();
 
             var dividedChars = input
                .GroupBy(c => c)
@@ -65,17 +69,19 @@ namespace Kodowanie_Shannona_Fano
 
             string treeCode = TreeService.GetTreeCode(root, "", "0");
 
+            Encode(codeWordList.ToDictionary(k => k.Char, v => v.Code), input, treeCode);
+
             SummaryListView.ItemsSource = summary;
 
             TreeCodeTextBox.Text = treeCode;
-
-            Encode(codeWordList.ToDictionary(k => k.Char, v => v.Code), input, treeCode);
         }
 
         private void DecodeButton_Click(object sender, RoutedEventArgs e)
         {
             if (BinaryFileBuffer != null)
-            {
+            {     
+                stopwatch.Start();
+
                 List<byte> treeBuffer = new List<byte>();
                 bool ff = false;
 
@@ -101,19 +107,14 @@ namespace Kodowanie_Shannona_Fano
 
                 var treeCode = string.Join("", treeBuffer.Select(b => Convert.ToString(b, 2).PadLeft(8, '0')));
 
-                TreeCodeTextBox.Text = TreeCodeService.RestoreReadableTreeCode(treeCode);
-
                 Decode(string.Join("", data.Select(b => Convert.ToString(b, 2).PadLeft(8, '0'))), treeCode);
+
+                TreeCodeTextBox.Text = TreeCodeService.RestoreReadableTreeCode(treeCode);
             }
         }
 
         private void Decode(string encoded, string treeCode)
         {
-            if (OutputFileTitle.Contains("Encoded"))
-            {
-                OutputFileTitle = OutputFileTitle.Replace("Encoded", "Decoded");
-            }
-
             var treeCodeLengthWithAdditionalZeros = treeCode.Length;
 
             Node root = new Node('\0');
@@ -169,6 +170,15 @@ namespace Kodowanie_Shannona_Fano
                 });
             }
 
+            stopwatch.Stop();
+
+            TimeLabel.Content = $"Czas dekodowania: {stopwatch.Elapsed}";
+
+            if (OutputFileTitle.Contains("Encoded"))
+            {
+                OutputFileTitle = OutputFileTitle.Replace("Encoded", "Decoded");
+            }
+
             SummaryListView.ItemsSource = summary;
 
             OutputTextBox.Text = decoded.ToString();
@@ -187,7 +197,6 @@ namespace Kodowanie_Shannona_Fano
 
         private void Encode(Dictionary<char, string> codeWordList, string plainText, string treeCode)
         {
-            OutputFileTitle = OutputFileTitle.Insert(0, "Encoded_");
 
             StringBuilder builder = new StringBuilder();
 
@@ -197,7 +206,14 @@ namespace Kodowanie_Shannona_Fano
             }
 
             OutputFileTreeCode = TreeCodeService.FixTreeCode(treeCode);
+
             OutputFileData = builder.ToString();
+
+            stopwatch.Stop();
+
+            TimeLabel.Content = $"Czas kodowania: {stopwatch.Elapsed}";
+
+            OutputFileTitle = OutputFileTitle.Insert(0, "Encoded_");
 
             OutputTextBox.Text = OutputFileTreeCode + OutputFileData;
 
@@ -292,6 +308,7 @@ namespace Kodowanie_Shannona_Fano
             EncodedLengthLabel.Content = $"Długość tekstu zakodowanego: ";
             PlainLenghtLabel.Content = $"Długość tekstu jawnego: ";
             CompressionRatioLabel.Content = $"Stopień kompresji: ";
+            TimeLabel.Content = "Czas: ";
 
             CodeButton.IsEnabled = false;
             DecodeButton.IsEnabled = false;

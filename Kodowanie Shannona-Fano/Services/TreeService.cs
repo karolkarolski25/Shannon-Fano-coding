@@ -20,7 +20,17 @@ namespace Kodowanie_Shannona_Fano.Services
                 return;
             }
 
-            Decode(encoded[iter++] == '0' ? node.Left : node.Right, encoded, ref decodedChar, ref iter);
+            if (encoded[iter] == '0')
+            {
+                iter += 1;
+                Decode(node.Left, encoded, ref decodedChar, ref iter);
+            }
+
+            else if (encoded[iter] == '1')
+            {
+                iter += 1;
+                Decode(node.Right, encoded, ref decodedChar, ref iter);
+            }
         }
 
         public static void BuildTreeForDecoding(Node root, Node parent, ref string treeCode)
