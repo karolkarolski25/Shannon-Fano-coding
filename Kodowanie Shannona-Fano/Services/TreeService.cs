@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Kodowanie_Shannona_Fano.Models;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 
-namespace Kodowanie_Shannona_Fano
+namespace Kodowanie_Shannona_Fano.Services
 {
     public static class TreeService
     {

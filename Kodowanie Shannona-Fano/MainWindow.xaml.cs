@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using Kodowanie_Shannona_Fano.Models;
+using Kodowanie_Shannona_Fano.Services;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -204,19 +206,6 @@ namespace Kodowanie_Shannona_Fano
             IsContentEncoded = true;
         }
 
-        private (string stringMsg, byte[] byteArray) ReadBinaryFile(string path)
-        {
-            byte[] buffer = File.ReadAllBytes(path);
-            StringBuilder stringBuilder = new StringBuilder();
-
-            foreach (var b in buffer)
-            {
-                stringBuilder.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
-            }
-
-            return (stringBuilder.ToString(), buffer);
-        }
-
         private void LoadFileButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog inputFile = new OpenFileDialog();
@@ -229,7 +218,7 @@ namespace Kodowanie_Shannona_Fano
 
                 if (Path.GetExtension(inputFile.FileName) == ".bin")
                 {
-                    var binaryFileContent = ReadBinaryFile(inputFile.FileName);
+                    var binaryFileContent = FileService.ReadBinaryFile(inputFile.FileName);
 
                     InputTextBox.Text = binaryFileContent.stringMsg;
                     BinaryFileBuffer = binaryFileContent.byteArray;
@@ -254,77 +243,15 @@ namespace Kodowanie_Shannona_Fano
             outputFile.Title = "Wybierz plik";
             outputFile.FileName = OutputFileTitle;
 
-            if (IsContentEncoded)
-            {
-                byte[] treeCodeBuffer = new byte[(OutputFileTreeCode.Length / 8) + 1];
-
-                for (int i = 0, j = 0; i < OutputFileTreeCode.Length; i += 8, j++)
-                {
-                    if (i + 8 > OutputFileTreeCode.Length)
-                    {
-                        treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i).PadRight(8, '0'), 2);
-                    }
-                    else
-                    {
-                        treeCodeBuffer[j] = (byte)Convert.ToInt32(OutputFileTreeCode.Substring(i, 8), 2);
-                    }
-                }
-
-                byte[] treeCodeBufferAndSpacer = new byte[treeCodeBuffer.Length + 2];
-
-                Array.Copy(treeCodeBuffer, treeCodeBufferAndSpacer, treeCodeBuffer.Length);
-                treeCodeBufferAndSpacer[treeCodeBuffer.Length] = 255;
-                treeCodeBufferAndSpacer[treeCodeBuffer.Length + 1] = 255;
-
-                byte[] dataBuffer = new byte[(OutputFileData.Length / 8) + 1];
-
-                for (int i = 0, j = 0; i < OutputFileData.Length; i += 8, j++)
-                {
-                    if (i + 8 > OutputFileData.Length)
-                    {
-                        var temp = OutputFileData.Substring(i);
-
-                        var lengthToAdd = 5 - temp.Length;
-
-                        if (lengthToAdd >= 0)
-                        {
-                            temp = temp.PadRight(5, '0');
-                            temp += Convert.ToString(lengthToAdd, 2).PadLeft(3, '0');
-                        }
-
-                        dataBuffer[j] = (byte)Convert.ToInt32(temp, 2);
-                    }
-                    else
-                    {
-                        dataBuffer[j] = (byte)Convert.ToInt32(OutputFileData.Substring(i, 8), 2);
-                    }
-                }
-
-                byte[] treeCodeBufferAndSpacerAndDataBuffer = new byte[treeCodeBufferAndSpacer.Length + dataBuffer.Length + 1];
-                Array.Copy(treeCodeBufferAndSpacer, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length);
-                Array.Copy(dataBuffer, 0, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length + 1, dataBuffer.Length);
-
-                if (outputFile.ShowDialog() == true)
-                {
-                    File.WriteAllBytes(outputFile.FileName, treeCodeBufferAndSpacerAndDataBuffer);
-                }
-            }
-            else
-            {
-                if (outputFile.ShowDialog() == true)
-                {
-                    File.WriteAllText(outputFile.FileName, OutputTextBox.Text);
-                }
-            }
+            FileService.SaveToFile(IsContentEncoded, OutputFileTreeCode, OutputFileData, OutputTextBox.Text, outputFile);
         }
 
         private void Window_MouseDown(object sender, MouseButtonEventArgs e)
         {
-            try
+            if (e.LeftButton == MouseButtonState.Pressed)
             {
                 DragMove();
             }
-            catch { }
         }
 
         private void ExitButton_Click(object sender, RoutedEventArgs e)

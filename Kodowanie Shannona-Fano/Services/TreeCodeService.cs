@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Kodowanie_Shannona_Fano
+namespace Kodowanie_Shannona_Fano.Services
 {
     public static class TreeCodeService
     {
