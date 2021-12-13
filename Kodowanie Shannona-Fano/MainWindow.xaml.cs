@@ -33,7 +33,7 @@ namespace Kodowanie_Shannona_Fano
 
         private void CodeButton_Click(object sender, RoutedEventArgs e)
         {
-            var input = InputTextBox.Text.Replace("\r", "").Replace("\0", "").Replace("•", "TUTAAAAAj");
+            var input = InputTextBox.Text.Replace("\r", "").Replace("\0", "");
 
             PlainLenghtLabel.Content = $"Długość tekstu jawnego: {input.Length * 8} bitów";
 
