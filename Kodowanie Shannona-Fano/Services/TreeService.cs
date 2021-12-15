@@ -17,18 +17,21 @@ namespace Kodowanie_Shannona_Fano.Services
             if (node.Left == null && node.Right == null)
             {
                 decodedChar = node.Value;
+
                 return;
             }
 
             if (encoded[iter] == '0')
             {
                 iter += 1;
+
                 Decode(node.Left, encoded, ref decodedChar, ref iter);
             }
 
             else if (encoded[iter] == '1')
             {
                 iter += 1;
+
                 Decode(node.Right, encoded, ref decodedChar, ref iter);
             }
         }
@@ -39,6 +42,7 @@ namespace Kodowanie_Shannona_Fano.Services
             {
                 return;
             }
+            
             else
             {
                 if (treeCode[0] == '0')
@@ -47,36 +51,47 @@ namespace Kodowanie_Shannona_Fano.Services
                     {
                         root.Left = new Node('\0');
                         treeCode = treeCode.Substring(1);
+
                         BuildTreeForDecoding(root.Left, root, ref treeCode);
                     }
+                    
                     if (treeCode[0] != '1')
                     {
                         if (root.Right == null)
                         {
                             root.Right = new Node('\0');
+
                             BuildTreeForDecoding(root.Right, root, ref treeCode);
                         }
                     }
                 }
+
                 if (treeCode[0] == '1')
                 {
                     if (root.Left == null && root.Right == null)
                     {
                         char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+
                         treeCode = treeCode.Substring(10);
                         root.Value = value;
                     }
+
                     else if (root.Left == null)
                     {
                         char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+
                         treeCode = treeCode.Substring(10);
+
                         root.Left = new Node('\0');
                         root.Left.Value = value;
                     }
+
                     else if (root.Right == null)
                     {
                         char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+
                         treeCode = treeCode.Substring(10);
+
                         root.Right = new Node('\0');
                         root.Right.Value = value;
                     }
@@ -101,6 +116,7 @@ namespace Kodowanie_Shannona_Fano.Services
             {
                 tempCode += "1";
                 treeCode += tempCode + "[" + node.Value + "]";
+
                 return treeCode;
             }
 
@@ -114,6 +130,7 @@ namespace Kodowanie_Shannona_Fano.Services
             {
                 tempCode += "1";
                 treeCode += tempCode + "[" + node.Value + "]";
+
                 return treeCode;
             }
 
@@ -163,6 +180,7 @@ namespace Kodowanie_Shannona_Fano.Services
             if (codeList.Count() == 1)
             {
                 node.Value = codeList.First().Char;
+
                 return;
             }
 
@@ -180,6 +198,7 @@ namespace Kodowanie_Shannona_Fano.Services
                 {
                     bestDiff = differential;
                 }
+
                 else
                 {
                     break;

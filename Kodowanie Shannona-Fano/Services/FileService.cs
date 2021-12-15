@@ -38,6 +38,7 @@ namespace Kodowanie_Shannona_Fano.Services
                     {
                         treeCodeBuffer[j] = (byte)Convert.ToInt32(outputFileTreeCode.Substring(i).PadRight(8, '0'), 2);
                     }
+
                     else
                     {
                         treeCodeBuffer[j] = (byte)Convert.ToInt32(outputFileTreeCode.Substring(i, 8), 2);
@@ -47,6 +48,7 @@ namespace Kodowanie_Shannona_Fano.Services
                 byte[] treeCodeBufferAndSpacer = new byte[treeCodeBuffer.Length + 2];
 
                 Array.Copy(treeCodeBuffer, treeCodeBufferAndSpacer, treeCodeBuffer.Length);
+                
                 treeCodeBufferAndSpacer[treeCodeBuffer.Length] = 255;
                 treeCodeBufferAndSpacer[treeCodeBuffer.Length + 1] = 255;
 
@@ -57,7 +59,6 @@ namespace Kodowanie_Shannona_Fano.Services
                     if (i + 8 > outputFileData.Length)
                     {
                         var temp = outputFileData.Substring(i);
-
                         var lengthToAdd = 5 - temp.Length;
 
                         if (lengthToAdd >= 0)
@@ -75,6 +76,7 @@ namespace Kodowanie_Shannona_Fano.Services
                 }
 
                 byte[] treeCodeBufferAndSpacerAndDataBuffer = new byte[treeCodeBufferAndSpacer.Length + dataBuffer.Length];
+
                 Array.Copy(treeCodeBufferAndSpacer, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length);
                 Array.Copy(dataBuffer, 0, treeCodeBufferAndSpacerAndDataBuffer, treeCodeBufferAndSpacer.Length, dataBuffer.Length);
 

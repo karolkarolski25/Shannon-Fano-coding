@@ -12,6 +12,7 @@
         {
             Left = null;
             Right = null;
+            
             this.Value = Value;
         }
     }
