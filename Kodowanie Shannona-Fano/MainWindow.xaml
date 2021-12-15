@@ -6,30 +6,37 @@
         xmlns:local="clr-namespace:Kodowanie_Shannona_Fano"
         mc:Ignorable="d"
         Title="Shannon-Fano coding"
-        Height="825
-        "
-        Width="800"
+        Height="825"
+        Width="1250"
         Background="#505461"
         ResizeMode="NoResize"
+        WindowStyle="None"
+        BorderBrush="White"
+        BorderThickness="1"
+        MouseDown="Window_MouseDown"
+        WindowStartupLocation="CenterScreen"
 >
     <Grid>
         <Grid.Effect>
             <DropShadowEffect/>
         </Grid.Effect>
 
-        <Button x:Name="CodeButton" Content="Koduj" FontSize="16" HorizontalAlignment="Left" Margin="196,13,0,0" VerticalAlignment="Top" Width="80" Click="CodeButton_Click"/>
-        <Button x:Name="LoadFileButton" Content="Wczytaj plik" FontSize="16" HorizontalAlignment="Left" Margin="414,13,0,0" VerticalAlignment="Top" Width="113" Click="LoadFileButton_Click"/>
-        <TextBox x:Name="EncodedTextBox" IsReadOnly="True" FontSize="14" HorizontalAlignment="Left" VerticalScrollBarVisibility="Auto" Margin="365,428,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="404" Height="338"/>
-        <TextBox x:Name="PlainTextBox" IsReadOnly="True" FontSize="16" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Center" Margin="0,54,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="720" Height="232"/>
-        <Button x:Name="DecodeButton" IsEnabled="False" Content="Dekoduj" FontSize="16" HorizontalAlignment="Left" Margin="662,13,0,0" VerticalAlignment="Top" Width="87"/>
+        <Button x:Name="ExitButton" Content="X" FontSize="16" HorizontalAlignment="Left" Margin="1203,10,0,0" VerticalAlignment="Top" Height="26" Width="26" Click="ExitButton_Click"/>
+        <Button x:Name="MinimiseButton" Content="_" FontSize="16" HorizontalAlignment="Left" Margin="1172,10,0,0" VerticalAlignment="Top" Width="26" Height="26" Click="MinimiseButton_Click"/>
 
-        <Label Content="Zawartość pliku" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="40,13,0,0" VerticalAlignment="Top"/>
-        <Label Content="|V| Wartość wyjściowa |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="423,392,0,0" VerticalAlignment="Top"/>
-        <Label Content="Lista słów kodowych" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="40,294,0,0" VerticalAlignment="Top" Height="42"/>
-        <Label x:Name="PlainLenghtLabel" Content="Długość tekstu jawnego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,667,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="EncodedLengthLabel" Content="Długość tekstu zakodowanego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,703,0,0" VerticalAlignment="Top"/>
-        <Label x:Name="CompressionRatioLabel" Content="Stopień kompresji: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,739,0,0" VerticalAlignment="Top"/>
-        <ListView x:Name="SummaryListView" Margin="40,322,456,171">
+        <Button x:Name="CodeButton" IsEnabled="false" Content="Koduj" FontSize="16" HorizontalAlignment="Left" Margin="713,16,0,0" VerticalAlignment="Top" Width="80" Click="CodeButton_Click"/>
+        <Button x:Name="LoadFileButton" Content="Wczytaj plik" FontSize="16" HorizontalAlignment="Left" Margin="823,16,0,0" VerticalAlignment="Top" Width="113" Click="LoadFileButton_Click"/>
+        <TextBox x:Name="OutputTextBox" FontSize="16" IsReadOnly="True" HorizontalAlignment="Left" VerticalScrollBarVisibility="Auto" Margin="792,217,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="424" Height="571"/>
+        <TextBox x:Name="InputTextBox" FontSize="16" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="24,54,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="392" Height="608"/>
+        <Button x:Name="DecodeButton" IsEnabled="False" Content="Dekoduj" FontSize="16" HorizontalAlignment="Left" Margin="967,16,0,0" VerticalAlignment="Top" Width="87" Click="DecodeButton_Click"/>
+
+        <Label Content="|V| Zawartość pliku |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="40,13,0,0" VerticalAlignment="Top"/>
+        <Label Content="|V| Wartość wyjściowa |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="832,175,0,0" VerticalAlignment="Top"/>
+        <Label Content="Lista słów kodowych" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="462,199,0,0" VerticalAlignment="Top" Height="42"/>
+        <Label x:Name="PlainLenghtLabel" Content="Długość tekstu jawnego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,665,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="EncodedLengthLabel" Content="Długość tekstu zakodowanego: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,701,0,0" VerticalAlignment="Top"/>
+        <Label x:Name="CompressionRatioLabel" Content="Stopień kompresji: " FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="24,737,0,0" VerticalAlignment="Top"/>
+        <ListView x:Name="SummaryListView" Margin="458,241,498,161">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="Znak" Width="50" DisplayMemberBinding="{Binding Char}"/>
@@ -38,9 +45,12 @@
                 </GridView>
             </ListView.View>
         </ListView>
-        <TextBox x:Name="TreeCodeTextBox" IsReadOnly="True" HorizontalAlignment="Left" Margin="349,322,0,0" FontSize="16" TextWrapping="Wrap" VerticalAlignment="Top" Width="411" Height="65"/>
-        <Label Content="|V| Drzewo |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="501,291,0,0" VerticalAlignment="Top"/>
-        <Button x:Name="SaveToFileButton" IsEnabled="False" FontSize="16" Content="Zapisz do pliku" HorizontalAlignment="Left" Margin="629,395,0,0" VerticalAlignment="Top" Width="131" Click="SaveToFileButton_Click"/>
+        <TextBox x:Name="TreeCodeTextBox" IsReadOnly="True" VerticalScrollBarVisibility="Auto" HorizontalAlignment="Left" Margin="458,90,0,0" FontSize="16" TextWrapping="Wrap" VerticalAlignment="Top" Width="758" Height="65"/>
+        <Label Content="|V| Drzewo |V|" FontSize="16" Foreground="White" HorizontalAlignment="Left" Margin="808,59,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="SaveToFileButton" IsEnabled="False" FontSize="16" Content="Zapisz do pliku" HorizontalAlignment="Left" Margin="1038,178,0,0" VerticalAlignment="Top" Width="131" Click="SaveToFileButton_Click"/>
+        <Label Content="Kodowanie Shannona-Fano z użyciem drzew" FontSize="16" FontWeight="Bold" Foreground="White" HorizontalAlignment="Left" Margin="290,13,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="ResetButton" Content="Reset" FontSize="16" HorizontalAlignment="Left" Margin="671,184,0,0" VerticalAlignment="Top" Click="ResetButton_Click" Width="92"/>
+        <Label x:Name="TimeLabel" FontSize="16" Foreground="White" Content="Czas: " HorizontalAlignment="Left" Margin="24,773,0,0" VerticalAlignment="Top"/>
 
 
     </Grid>

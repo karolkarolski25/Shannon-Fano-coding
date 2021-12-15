@@ -1,14 +1,87 @@
-﻿using System;
+﻿using Kodowanie_Shannona_Fano.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Kodowanie_Shannona_Fano
+namespace Kodowanie_Shannona_Fano.Services
 {
     public static class TreeService
     {
         public static int GetCount(IEnumerable<CharStatistics> list)
         {
             return list.Aggregate(0, (x, y) => x + y.Count);
+        }
+
+        public static void Decode(Node node, string encoded, ref char decodedChar, ref int iter)
+        {
+            if (node.Left == null && node.Right == null)
+            {
+                decodedChar = node.Value;
+                return;
+            }
+
+            if (encoded[iter] == '0')
+            {
+                iter += 1;
+                Decode(node.Left, encoded, ref decodedChar, ref iter);
+            }
+
+            else if (encoded[iter] == '1')
+            {
+                iter += 1;
+                Decode(node.Right, encoded, ref decodedChar, ref iter);
+            }
+        }
+
+        public static void BuildTreeForDecoding(Node root, Node parent, ref string treeCode)
+        {
+            if (!treeCode.Any() || !treeCode.Any(c => c == '1'))
+            {
+                return;
+            }
+            else
+            {
+                if (treeCode[0] == '0')
+                {
+                    if (root.Left == null)
+                    {
+                        root.Left = new Node('\0');
+                        treeCode = treeCode.Substring(1);
+                        BuildTreeForDecoding(root.Left, root, ref treeCode);
+                    }
+                    if (treeCode[0] != '1')
+                    {
+                        if (root.Right == null)
+                        {
+                            root.Right = new Node('\0');
+                            BuildTreeForDecoding(root.Right, root, ref treeCode);
+                        }
+                    }
+                }
+                if (treeCode[0] == '1')
+                {
+                    if (root.Left == null && root.Right == null)
+                    {
+                        char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+                        treeCode = treeCode.Substring(10);
+                        root.Value = value;
+                    }
+                    else if (root.Left == null)
+                    {
+                        char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+                        treeCode = treeCode.Substring(10);
+                        root.Left = new Node('\0');
+                        root.Left.Value = value;
+                    }
+                    else if (root.Right == null)
+                    {
+                        char value = (char)Convert.ToInt32(treeCode.Substring(1, 9), 2);
+                        treeCode = treeCode.Substring(10);
+                        root.Right = new Node('\0');
+                        root.Right.Value = value;
+                    }
+                }
+            }
         }
 
         public static string GetTreeCode(Node node, string tempCode, string treeCode)
